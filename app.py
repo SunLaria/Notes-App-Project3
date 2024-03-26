@@ -45,22 +45,32 @@ class User(BaseModel):
     
     def is_admin(self):
         return self.admin
+    
+    def validate(self):
+        if self.username == "" or  self.username == " ":
+            raise ValueError("Username Cannot Be empty or contain spaces")
+        if self.password =="" or self.password == " ":
+            raise ValueError("Password Casnnot Not Be empty or contain spaces")
+
+    def save(self, *args, **kwargs):
+        self.validate()
+        super().save(*args, **kwargs)
 
 
-class Task(BaseModel):
+
+class Note(BaseModel):
     id = AutoField()
-    text = CharField(max_length=25)
-    user = ForeignKeyField(User, backref="tasks")
+    text = CharField(max_length=25,null = True)
+    user = ForeignKeyField(User, backref="Notes")
     created_at = DateField(default=date.today())
 
     def to_dict(self):
         return {'id':self.id,"text":self.text,"user":self.user.to_dict(),"created_at":str(self.created_at)}
 
 
-
 # db connect
 db.connect()
-db.create_tables([User,Task],safe=True)
+db.create_tables([User,Note],safe=True)
 
 
 # user-login setup
@@ -106,13 +116,28 @@ def user_logout():
     return redirect("/login")
 
 
+@app.route("/register", methods=['GET','POST'])
+def register():
+    if request.method=="GET":
+        return render_template('register.html')
+    if request.method=="POST":
+        try:
+            if len(User.filter(username=request.form['username'])) < 1:
+                new_user = User.get_or_create(**{'username':request.form['username'],'password':request.form['password']})
+                return redirect("/login")
+            else:
+                return redirect('/register')
+        except:
+            return redirect("/register")
+
+
 
 @app.route("/admin", methods=['GET'])
 @login_required
 def admin():
     if request.method=="GET":
         if current_user.is_admin():
-            return "admin"
+            return render_template("admin.html")
         else:
             return redirect("/")
 
@@ -121,93 +146,104 @@ def admin():
 @app.route("/", methods=['GET'])
 @login_required
 def home():
-    return "Home"
+    return render_template("home.html",admin=current_user.is_admin(),user_id=current_user.id)
 
 
 
 
-
-
-
-
-@app.route('/api/user',methods=['POST','DELETE','PATCH'])
+@app.route('/api/user',methods=['GET','POST','DELETE','PATCH'])
 @login_required
 def user_actions():
     if current_user.is_admin():
         # json {username,password}
         if request.method=='POST':
             try:
-                data = json.loads(request.json)
+                data = request.json
                 if len(User.filter(username=data['username'])) < 1:
                     new_user = User.get_or_create(**{'username':data['username'],'password':data['password']})
-                    return json.dumps(f'User Created Succesfully, with id {new_user[0].id}')
+                    return json.dumps({'result':f'User Created Succesfully, with id {new_user[0].id}'})
                 else:
-                    return json.dumps(f'User Already Exists')
+                    return json.dumps({'result':f'User Already Exists'})
             except ValueError as e:
-                return json.dumps(f'User Creation Failed, {e}')
+                return json.dumps({'result':f'User Creation Failed, {e}'})
         # json {user_id}
         if request.method=="DELETE":
             try:
-                data = json.loads(request.json)
+                data = request.args
                 user = User.get_by_id(pk=data['user_id'])
                 user.delete_instance(recursive=True)
-                return json.dumps('User Deleted Succesfully')
+                return json.dumps({'result':'User Deleted Succesfully'})
             except ValueError as e:
-                return json.dumps(f'User Delete Failed, {e}')
+                return json.dumps({'result':f'User Delete Failed, {e}'})
         # json {user_id, password}
         if request.method=="PATCH":
             try:
-                data = json.loads(request.json)
+                data = request.json
                 user = User.get_by_id(pk=data['user_id'])
                 user.password = data['password']
                 user.save()
-                return json.dumps('User Password Updated Succesfully')
+                return json.dumps({'result':'User Password Updated Succesfully'})
             except ValueError as e:
-                return json.dumps(f'User Password Update Failed, {e}')
+                return json.dumps({'result':f'User Password Update Failed, {e}'})
+        
+        if request.method=="GET":
+            try:
+                if request.args:
+                    data = dict(request.args)
+                    if data.get('all')=="users":
+                        return json.dumps([i.to_dict() for i in User.select()])
+                    if data.get('all')=="notes":
+                        return json.dumps([i.to_dict() for i in Note.select()])
+                    
+            except ValueError as e:
+                return json.dumps({'result':f'Failed to achieve users, {e}'})
+        
 
 
-@app.route('/api/task',methods=['GET','POST','DELETE','PATCH'])
+
+
+@app.route('/api/note',methods=['GET','POST','DELETE','PATCH'])
 @login_required
-def task_actions():
+def Note_actions():
     # json {text,user_id}
     if request.method=="POST":
         try:
-            data = json.loads(request.json)
-            new_task = Task.create(**{'text':data['text'],'user':User.get_by_id(pk=data['user_id'])})
-            return json.dumps(f'Task Created With id {new_task.id}')
+            data = request.json
+            new_note = Note.create(**{'text':data['text'],'user':User.get_by_id(pk=data['user_id'])})
+            return json.dumps({'result':f'Note Created With id {new_note.id}'})
         except ValueError as e:
-            return json.dumps(f'Task Create Failed, {e}')
-    # json {text,task_id}
+            return json.dumps({'result':f'Note Create Failed, {e}'})
+    # json {text,note_id}
     if request.method=="PATCH":
         try:
-            data = json.loads(request.json)
-            task = Task.get_by_id(pk=data['task_id'])
-            task.text = data['text']
-            task.save()
-            return json.dumps(f'Task {task.id} Updated')
+            data = request.json
+            note = Note.get_by_id(pk=data['note_id'])
+            note.text = data['text']
+            note.save()
+            return json.dumps({'result':f'Note {note.id} Updated'})
         except ValueError as e:
-            return json.dumps(f'Task Update Failed, {e}')
-    # json {task_id}
+            return json.dumps({'result':f'Note Update Failed, {e}'})
+    # json {note_id}
     if request.method=="DELETE":
         try:
-            data = json.loads(request.json)
-            task = Task.delete_by_id(pk=data['task_id'])
-            return json.dumps(f'Task {data["task_id"]} Deleted')
+            data = request.args
+            note = Note.delete_by_id(pk=data['note_id'])
+            return json.dumps({'result':f'Note {data["note_id"]} Deleted'})
         except ValueError as e:
-            return json.dumps(f'Task Delete Failed, {e}')
-    # user_id, task_id
+            return json.dumps({'result':f'Note Delete Failed, {e}'})
+    # user_id, Note_id
     if request.method=="GET":
         try:
             if request.args:
                 data = dict(request.args)
                 if data.get('user_id'):
-                    return json.dumps([i.to_dict() for i in Task.select().join(User).where(User.id==data['user_id'])])
-                if data.get('task_id'):
-                    return json.dumps([i.to_dict() for i in Task.select().where(Task.id==data['task_id'])])
+                    return json.dumps([i.to_dict() for i in Note.select().join(User).where(User.id==data['user_id'])])
+                if data.get('note_id'):
+                    return json.dumps([i.to_dict() for i in Note.select().where(Note.id==data['note_id'])])
             else:
-                return json.dumps([i.to_dict() for i in Task.filter()])
+                return json.dumps([i.to_dict() for i in Note.filter()])
         except ValueError as e:
-            return json.dumps(f'Tasks Read Failed, {e}')
+            return json.dumps({'result':f'Notes Read Failed, {e}'})
         
 
 

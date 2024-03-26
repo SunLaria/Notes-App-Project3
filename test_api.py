@@ -1,142 +1,141 @@
-from app import app
+import pytest
+from app import app, User
 import json
+from flask_login import FlaskLoginClient
 
 
+app.test_client_class = FlaskLoginClient
+
+client = app.test_client(user=User.get_by_id(1))
 
 def test_create_user():
     # creates a user
-    response = app.test_client().post(
+    response = client.post(
         "/api/user",
-        json=json.dumps({'username':'test1','password':'test1'})
+        json={'username':'test1','password':'test1'}
     )
     res = json.loads(response.data)
-    assert 'User Created Succesfully' in res
-    user_id = res[-1]
+    assert 'User Created Succesfully' in res['result']
+    user_id = res['result'][-1]
 
     #  deletes a user
-    response_delete = app.test_client().delete(
-        "/api/user",
-        json=json.dumps({'user_id':user_id})
+    response_delete = client.delete(
+        f"/api/user?user_id={user_id}"
     )
     res = json.loads(response_delete.data)
-    assert 'User Deleted Succesfully' == res
+    assert 'User Deleted Succesfully' == res['result']
 
 
 
 def test_user_already_created():
     name = "ron"
     # creates a user
-    response_create = app.test_client().post(
+    response_create = client.post(
         "/api/user",
-        json=json.dumps({'username':name,'password':'test'})
+        json={'username':name,'password':'test'}
     )
     res = json.loads(response_create.data)
-    assert 'User Created Succesfully' in res
+    assert 'User Created Succesfully' in res['result']
     
     #  creates user with the same name
-    user_id = res[-1]
-    response_create_dupliate = app.test_client().post(
+    user_id = res['result'][-1]
+    response_create_dupliate = client.post(
         "/api/user",
-        json=json.dumps({'username':name,'password':'123'})
+        json={'username':name,'password':'123'}
     )
     res = json.loads(response_create_dupliate.data)
-    assert 'User Already Exists' in res
+    assert 'User Already Exists' in res['result']
     
     #  deletes the user
-    response_delete = app.test_client().delete(
-        "/api/user",
-        json=json.dumps({'user_id':user_id})
+    response_delete = client.delete(
+        f"/api/user?user_id={user_id}"
     )
     res = json.loads(response_delete.data)
-    assert 'User Deleted Succesfully' == res
+    assert 'User Deleted Succesfully' == res['result']
 
 
 def test_user_password_update():
     # creates a user
-    response_create = app.test_client().post(
+    response_create = client.post(
         "/api/user",
-        json=json.dumps({'username':'test9','password':'test'})
+        json={'username':'test9','password':'test'}
     )
     res = json.loads(response_create.data)
-    assert 'User Created Succesfully' in res
+    assert 'User Created Succesfully' in res['result']
     
     #  update password
-    user_id = res[-1]
-    response_password_update = app.test_client().patch(
+    user_id = res['result'][-1]
+    response_password_update = client.patch(
         "/api/user",
-        json=json.dumps({'user_id':user_id,'password':'123'})
+        json={'user_id':user_id,'password':'123'}
     )
     res = json.loads(response_password_update.data)
-    assert 'User Password Updated Succesfully' in res
+    assert 'User Password Updated Succesfully' in res['result']
 
     #  delete a user
-    response_delete = app.test_client().delete(
-        "/api/user",
-        json=json.dumps({'user_id':user_id})
+    response_delete = client.delete(
+        f"/api/user?user_id={user_id}"
     )
     res = json.loads(response_delete.data)
-    assert 'User Deleted Succesfully' == res
+    assert 'User Deleted Succesfully' == res['result']
 
 
 
 def test_user_delete():
     #  create a user
-    response_create = app.test_client().post(
+    response_create = client.post(
         "/api/user",
-        json=json.dumps({'username':'test5','password':'test'})
+        json={'username':'test5','password':'test'}
     )
     res = json.loads(response_create.data)
-    user_id = res[-1]
-    assert 'User Created Succesfully' in res
+    user_id = res['result'][-1]
+    assert 'User Created Succesfully' in res['result']
 
     #  delete a user
-    response_delete = app.test_client().delete(
-        "/api/user",
-        json=json.dumps({'user_id':user_id})
+    response_delete = client.delete(
+        f"/api/user?user_id={user_id}"
     )
     res = json.loads(response_delete.data)
-    assert 'User Deleted Succesfully' == res
+    assert 'User Deleted Succesfully' == res['result']
 
-def test_task_actions():
-    #  create user
-    response = app.test_client().post(
+def test_note_actions():
+    #  create users
+    response = client.post(
         "/api/user",
-        json=json.dumps({'username':'test10','password':'test1'})
+        json={'username':'test12','password':'test1'}
     )
     res = json.loads(response.data)
-    user_id = res[-1]
-    assert 'User Created Succesfully' in res
+    user_id = res['result'][-1]
+    assert 'User Created Succesfully' in res['result']
 
     #  create post
-    response = app.test_client().post(
-        "/api/task",
-        json=json.dumps({'text':'some text','user_id':user_id})
+    response = client.post(
+        "/api/note",
+        json={'text':'some text','user_id':user_id}
     )
     res = json.loads(response.data)
-    task_id = res[-1]
-    assert 'Task Created With id' in res
+    note_id = res['result'][-1]
+    assert 'Note Created With id' in res['result']
 
     # update post
-    response = app.test_client().patch(
-        "/api/task",
-        json=json.dumps({'text':'some text','task_id':task_id})
+    response = client.patch(
+        "/api/note",
+        json={'text':'some text','note_id':note_id}
     )
     res = json.loads(response.data)
     
-    assert f'Task {task_id} Updated' in res
+    assert f'Note {note_id} Updated' in res['result']
 
     # delete post
-    response = app.test_client().delete(
-        "/api/task",
-        json=json.dumps({'task_id':task_id})
+    response = client.delete(
+        f"/api/note?note_id={note_id}"
     )
     res = json.loads(response.data)
-    assert f'Task {task_id} Deleted' in res
+    assert f'Note {note_id} Deleted' in res['result']
 
 #  deletes a user
-    response_delete = app.test_client().delete(
-        "/api/user",
-        json=json.dumps({'user_id':user_id})
+    response_delete = client.delete(
+        f"/api/user?user_id={user_id}"
     )
     res = json.loads(response_delete.data)
-    assert 'User Deleted Succesfully' == res
+    assert 'User Deleted Succesfully' == res['result']

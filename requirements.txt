@@ -1,0 +1,4 @@
+flask
+gunicron
+peewee
+flask_login

@@ -1,4 +1,5 @@
-flask
+Flask
+Flask-Cors
+flask-login
 gunicron
 peewee
-flask_login

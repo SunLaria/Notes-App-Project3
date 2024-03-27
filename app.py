@@ -29,7 +29,7 @@ class User(BaseModel):
     admin = BooleanField(default=False)
 
     def to_dict(self):
-        return {'id':self.id,"username":self.username,"created_at":str(self.created_at)}
+        return {'id':self.id,"username":self.username,"admin":self.admin,"created_at":str(self.created_at)}
     
     def is_active(self):
         return True
@@ -160,7 +160,7 @@ def user_actions():
             try:
                 data = request.json
                 if len(User.filter(username=data['username'])) < 1:
-                    new_user = User.get_or_create(**{'username':data['username'],'password':data['password']})
+                    new_user = User.get_or_create(**{'username':data['username'],'password':data['password'],'admin':True if data['admin']=="True" else False})
                     return json.dumps({'result':f'User Created Succesfully, with id {new_user[0].id}'})
                 else:
                     return json.dumps({'result':f'User Already Exists'})

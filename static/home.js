@@ -78,9 +78,8 @@ function Notes() {
         axios.post('/api/note', { text: "", user_id: user_id })
             .then((response) => {
                 const newNoteId = response.data.result.split("Note Created With id ")[1];
-                console.log(newNoteId);
                 setUserNotes([...userNotes, { id: newNoteId, text: '', user: user_id, created_at:date.toISOString().slice(0, 10)}]);
-                console.log("Note Created");
+                console.log(`Note Created with id ${newNoteId}`);
             })
             .catch((error) => {console.error('Error creating note:', error)});
     };

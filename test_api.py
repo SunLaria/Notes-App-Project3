@@ -26,7 +26,6 @@ def test_create_user():
     assert 'User Deleted Succesfully' == res['result']
 
 
-
 def test_user_already_created():
     name = "ron"
     # creates a user

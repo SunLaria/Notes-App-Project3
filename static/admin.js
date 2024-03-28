@@ -48,7 +48,7 @@ function UserRow(p){
             <td>{user.username}</td>
             <td>{user.created_at}</td>
             <td>{user.admin==1?'True':'False'}</td>
-            <td><button onClick={()=>{deleteEvent(user.id)}}>Delete</button></td>
+            {user.username!="admin"?<td><button onClick={()=>{deleteEvent(user.id)}}>Delete</button></td>:""}
             <td>
             {editMode?
             <>

@@ -12,7 +12,7 @@ def test_create_user():
     # creates a user
     response = client.post(
         "/api/user",
-        json={'username':'test1','password':'test1'}
+        json={'username':'test1','password':'test1','admin':'False'}
     )
     res = json.loads(response.data)
     assert 'User Created Succesfully' in res['result']
@@ -31,7 +31,7 @@ def test_user_already_created():
     # creates a user
     response_create = client.post(
         "/api/user",
-        json={'username':name,'password':'test'}
+        json={'username':name,'password':'test','admin':'False'}
     )
     res = json.loads(response_create.data)
     assert 'User Created Succesfully' in res['result']
@@ -40,7 +40,7 @@ def test_user_already_created():
     user_id = res['result'][-1]
     response_create_dupliate = client.post(
         "/api/user",
-        json={'username':name,'password':'123'}
+        json={'username':name,'password':'123','admin':'False'}
     )
     res = json.loads(response_create_dupliate.data)
     assert 'User Already Exists' in res['result']
@@ -57,7 +57,7 @@ def test_user_password_update():
     # creates a user
     response_create = client.post(
         "/api/user",
-        json={'username':'test9','password':'test'}
+        json={'username':'test9','password':'test','admin':'False'}
     )
     res = json.loads(response_create.data)
     assert 'User Created Succesfully' in res['result']
@@ -84,7 +84,7 @@ def test_user_delete():
     #  create a user
     response_create = client.post(
         "/api/user",
-        json={'username':'test5','password':'test'}
+        json={'username':'test5','password':'test','admin':'False'}
     )
     res = json.loads(response_create.data)
     user_id = res['result'][-1]
@@ -101,7 +101,7 @@ def test_note_actions():
     #  create users
     response = client.post(
         "/api/user",
-        json={'username':'test12','password':'test1'}
+        json={'username':'test12','password':'test1','admin':'False'}
     )
     res = json.loads(response.data)
     user_id = res['result'][-1]

@@ -165,7 +165,7 @@ textarea{
     position: relative;
 }
 
-.date-divs{
+.date-div{
     display: flex;
     gap: 5px;
     font-size:x-small;

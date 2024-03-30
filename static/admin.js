@@ -40,7 +40,7 @@ function UserRow(p){
             console.log(response.data.result);
             setEditMode(false)
         })
-        .catch((error) => {console.error('Error reseting user password:', error)});
+        .catch((error) => {console.error('Error reset user password:', error)});
     }
     return(
         <tr id={user.id} key={user.id}>
@@ -96,8 +96,8 @@ function CreateButton(p){
         console.log(adminChecked);
         axios.post("/api/user",{username:username,password:password,admin:adminChecked==true?"True":"False"})
         .then((response)=>{
-            if (response.data.result.includes("User Created Succesfully") == true){
-                let newUserID = response.data.result.split('User Created Succesfully, with id ')[1]
+            if (response.data.result.includes("User Created Successfully") == true){
+                let newUserID = response.data.result.split('User Created Successfully, with id ')[1]
                 let currentDate = new Date()
                 p.setFunc([...p.users,{id:newUserID,username:username,admin:adminChecked?1:0,created_at:currentDate.toISOString().slice(0, 10)}])
                 setEditMode(false)

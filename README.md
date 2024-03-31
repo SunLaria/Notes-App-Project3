@@ -26,6 +26,7 @@ python app.py
 Navigate to:
 - [http://localhost:5000/](http://localhost:5000/)
 - [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+- User Admin: admin:admin
 
 ## Additional Information
 - **Language**: Python
